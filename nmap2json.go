@@ -13,7 +13,7 @@ import (
 	"os"
 	"path/filepath"
 
-	nmap "github.com/marpie/go-nmap"
+	nmap "github.com/lair-framework/go-nmap"
 )
 
 // usage modifies the default usage message to include
