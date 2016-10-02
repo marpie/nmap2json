@@ -9,3 +9,7 @@ nmap2json converts a NMap XML file to a JSON file.
 	    	Output Directory. (default ".")
 	  -prettify
 	    	Prettify JSON Output.
+
+## Downloads
+
+Pre-compiled binaries are available on the [Github releases page](releases/latest).
