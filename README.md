@@ -12,4 +12,4 @@ nmap2json converts a NMap XML file to a JSON file.
 
 ## Downloads
 
-Pre-compiled binaries are available on the [Github releases page](releases/latest).
+Pre-compiled binaries are available on the [Github releases page](https://github.com/marpie/nmap2json/releases/latest).
