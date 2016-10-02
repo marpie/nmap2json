@@ -13,7 +13,8 @@ import (
 	"os"
 	"path/filepath"
 
-	nmap "github.com/lair-framework/go-nmap"
+	nmap "github.com/marpie/go-nmap"
+	s2m "github.com/marpie/struct2elasticMapping"
 )
 
 // usage modifies the default usage message to include
@@ -39,19 +40,50 @@ func parseScan(filename string) (*nmap.NmapRun, error) {
 	return nmap.Parse(b)
 }
 
+// writeMapping writes a ElasticSearch-Mapping of NmapRun to
+// the specified file.
+func writeMapping(filename string) error {
+	name, mapping, err := s2m.Analyze(nmap.NmapRun{}, "json")
+	if err != nil {
+		return err
+	}
+	data, err := s2m.MappingAsJson(name, mapping)
+	if err != nil {
+		return err
+	}
+	return ioutil.WriteFile(filename, data, 0644)
+}
+
 func main() {
 	flag.Usage = usage
-	outdir := flag.String("outdir", ".", "Output Directory.")
-	pretty := flag.Bool("prettify", false, "Prettify JSON Output.")
+	outdir := flag.String("outdir", "./", "Output Directory.")
+	pretty := flag.Bool("prettify", true, "Prettify JSON Output.")
+	mapping := flag.String("write-mapping", "", "Write an ElasticSearch-Mapping to the specified file.")
 	flag.Parse()
+
+	if len(*mapping) > 0 {
+		fmt.Println("[*] Writing Mapping to file: " + *mapping)
+		if err := writeMapping(*mapping); err != nil {
+			PrintError(err)
+			os.Exit(1)
+		}
+	}
 
 	for _, filename := range flag.Args() {
 		ext := filepath.Ext(filename)
-		outpath := filepath.Join(*outdir, filename[0:len(filename)-len(ext)]+".json")
+		basename := filepath.Base(filename)
+		outpath := filepath.Join(*outdir, basename[0:len(basename)-len(ext)]+".json")
 
+		fmt.Println("[*] Parsing: " + filename)
 		scan, err := parseScan(filename)
 		if err != nil {
-			fmt.Println("[E]", err)
+			PrintError(err)
+			continue
+		}
+
+		if scan.Scanner != "nmap" {
+			ErrorOut("Not a NMap XML file!\n")
+			continue
 		}
 
 		var b []byte
@@ -61,11 +93,14 @@ func main() {
 			b, err = json.Marshal(scan)
 		}
 		if err != nil {
-			fmt.Println("[E]", err)
+			PrintError(err)
+			continue
 		}
+
 		// Write to JSON file
+		fmt.Println("[+] Writing file to: " + outpath)
 		if err := ioutil.WriteFile(outpath, b, 0644); err != nil {
-			fmt.Println("[E]", err)
+			PrintError(err)
 		}
 	}
 }
